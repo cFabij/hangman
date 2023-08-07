@@ -1,0 +1,211 @@
+#!/bin/bash
+
+print_gameboard () {
+	status="$1"
+
+	clear
+	
+	if [ "$status" == 0 ]
+	then
+		echo "             -------    "
+		echo "             |     |    "
+		echo "             O     |    "
+		echo "            /|\    |    "
+		echo "             |     |    "
+		echo "            / \    |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 1 ] 
+	then
+		echo "             -------    "
+		echo "             |     |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 2 ]
+	then
+		echo "             -------    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 3 ]
+	then
+		echo "                   -    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 4 ]
+	then
+		echo -e "\n"
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 5 ]
+	then
+		echo -e "\n"
+		echo -e "\n"
+		echo "                   |    "
+		echo "                   |    "
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 6 ]
+	then
+		echo -e "\n"
+		echo -e "\n"
+		echo -e "\n"
+		echo "                   |    "
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 7 ]
+	then
+		echo -e "\n"
+		echo -e "\n"
+		echo -e "\n"
+		echo "                 __|__  "
+	fi
+	
+	if [ "$status" == 8 ]
+	then
+		echo -e "\n"
+		echo -e "\n"
+		echo -e "\n"
+		echo "                 _____  "
+	fi
+
+	if [ "$status" == 9 ]
+	then
+		echo -e "\n"
+		echo -e "\n"
+		echo -e "\n"
+		echo "                 ___    "
+	fi
+
+	echo -e "\n"
+	echo -e "\n"
+	echo "    ${start_array[*]}"	
+	echo -e "\n"
+	echo -e "\n"
+	echo "Gib einen Buchstaben ein, den du versuchen möchtest (ohne Enter-Taste)."
+	echo "Nicht enthaltene Buchstaben: ${failed_letters[*]}"
+	echo "Du hast $lifes Versuche"
+}
+
+clear
+
+built_in_words=("cantillon-effekt" "pomfineberer" "SSHD-Config-Alpträume!" "Bootcamp!" "Können wir das schaffen? Jo, wir schaffen das!" "Command Line Interface" "Mittagessen" "NAS mit Raid5 - fetzt!")
+number_of_built_in_words="${#built_in_words[@]}"
+
+echo "Selbt ein Wort oder einen Satz eingeben (1 - Standard) oder ein Zufallswort/-satz (2)?"
+read -s -N 1 choice
+
+if [ "$choice" == 2 ]
+then
+	random_number="$(( $RANDOM % $number_of_built_in_words + 0 ))"
+	answer="${built_in_words[$random_number]}"
+else
+	echo "Welches Wort soll gesucht werden?"
+	read answer
+fi
+
+lifes="10"
+answer="${answer,,}"
+hidden_answer="$(echo $answer | tr [a-z] _ )"
+#hidden_answer="$(echo $hidden_answer | tr [öäü] _ )"
+answer_array=()
+start_array=()
+failed_letters=()
+
+for (( i=0; i<${#answer}; i++ ))
+do
+
+	answer_array["$i"]+="${answer:$i:1}"
+	
+	start_array["$i"]+="${hidden_answer:$i:1}"
+
+done
+
+#sleep 5
+
+print_gameboard "$lifes"
+
+while [ $lifes -gt 0 ]
+do
+	read -s -N 1 input
+
+	input="${input,,}"
+
+	letters_found=()
+
+	for i in "${answer_array[@]}"
+	do
+		if [ "$i" == "$input" ]	
+		then
+			letters_found="$i"					
+			break	
+	fi
+	done
+
+	if [ "${#letters_found}" -eq 0 ]
+	then
+		failed_letters+="$input "
+		let "lifes--"
+	else
+		count=0
+
+		for i in "${answer_array[@]}"
+		do
+			if [ "$i" == "$letters_found" ]	
+			then
+				start_array["$count"]="$letters_found"
+			fi
+		
+			let "count++"
+		done	
+		
+	fi
+
+	print_gameboard "$lifes"
+	
+	if [ $lifes -eq 0 ]
+	then
+		echo "Leider verloren. Viel Glück beim nächsten Mal!"
+	else
+	
+		original="${answer_array[@]}"
+		solution="${start_array[@]}"
+
+		if [ "$original" == "$solution" ]
+		then
+			echo "Sehr stark! : )"
+			break
+		fi
+	fi
+done
+
